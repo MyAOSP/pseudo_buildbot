@@ -2,11 +2,11 @@
 
 BUILD_ROOT=`pwd`
 cd $BUILD_ROOT
-#repo sync
+repo sync
 . build/envsetup.sh
 
 # parse options
-while getopts ":c :o:" opt
+while getopts ":c :o: :b: " opt
 do
     case "$opt" in
         c) CLEAN=true;;
@@ -14,6 +14,7 @@ do
              THEME_VENDOR="$OPTARG"
              echo "using $THEME_VENDOR vendorsetup.sh"
         ;;
+        b) BUILDN="$OPTARG";;
         \?)
              echo "invalid option: -$OPTARG"
              echo "exiting..."
@@ -31,8 +32,8 @@ fi
 
 # Check for add_kernel_manifest (mostly just for aokp).
 if [ -f platform_manifest/add_kernel_manifest.sh ]; then
-	echo "kernel manifest exists, syncing kernel sources"
-	./platform_manifest/add_kernel_manifest.sh
+        echo "kernel manifest exists, syncing kernel sources"
+        ./platform_manifest/add_kernel_manifest.sh
 fi
 
 # find the ROM vendor from the manifest path for Pseudo
@@ -64,7 +65,11 @@ while read line ;do
     # vzwtab
     DEVNAME=$(echo $line | cut -f2 -d ' ' | cut -f2 -d '_' | cut -f1 -d '-')
     # build_device <lunch combo> <device name>
-    ./vendor/$ROM_VENDOR/bot/build_device.sh $line $DEVNAME
+    if [ -z "$BUILDN" ]; then
+        ./vendor/$ROM_VENDOR/bot/build_device.sh $line $DEVNAME $BUILDN
+    else
+        ./vendor/$ROM_VENDOR/bot/build_device.sh $line $DEVNAME
+    fi
 done < .bot_lunch
 
 # don't be messy
